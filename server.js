@@ -1,4 +1,5 @@
 const http = require("http");
+const fs = require("fs");
 
 const requestListener = (req, res) => {
     const url = req.url;
@@ -13,7 +14,7 @@ const requestListener = (req, res) => {
             <head><meta charset="utf-8"><title>Ask</title></head>
             <body>
             <h1>Ask a question</h1>
-            <form method="POST" action="/">
+            <form method="POST" action="/message">
                 <input type="text" name="question" placeholder="Your question" />
                 <button type="submit">Send</button>
             </form>
@@ -21,8 +22,19 @@ const requestListener = (req, res) => {
         </html>
         `);
     }
-    if (url === "/" && method === "POST") {
-        return res.end("<h1>Thanks for your question</h1>"); 
+    if (url === "/message" && method === "POST") {
+        const body = [];
+        req.on("data", (chunk) => {
+            body.push(chunk);
+        });
+        req.on("end", () => {
+            const parsedBody = Buffer.concat(body).toString();
+            const question = parsedBody.split("=")[1];
+            fs.writeFileSync("message.txt", question);
+        });
+        res.statusCode = 302;
+        res.setHeader("Location", "/");
+        return res.end();
     }
     if (url === "/about") {
         res.statusCode = 200;
